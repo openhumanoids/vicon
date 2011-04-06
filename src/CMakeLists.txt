@@ -1,7 +1,15 @@
-set(vicon_lib_name "ViconDataStreamSDK_CPP_x86")
+set(vicon_lib_name "ViconDataStreamSDK_CPP_x64")
+
+if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+    message("Linking against 64-bit Vicon library")
+    set(vicon_lib_name "ViconDataStreamSDK_CPP_x64")
+else()
+    message("Linking against 32-bit Vicon library")
+    set(vicon_lib_name "ViconDataStreamSDK_CPP_x86")
+endif()
 
 add_library(DataStreamSDK_Wrapper data_stream_client.cpp)
-target_link_libraries(DataStreamSDK_Wrapper -l${vicon_lib_name} -m32)         
+target_link_libraries(DataStreamSDK_Wrapper -l${vicon_lib_name})         
 
 # Create an executable program vicon-client
 add_executable(vicon-client vicon_client.cpp)
