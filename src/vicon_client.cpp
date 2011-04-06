@@ -14,7 +14,7 @@
 #include "data_stream_client.hpp"
 
 // defaults
-#define DEFAULT_MOCAP_HOST_ADDR "192.168.20.1"
+#define DEFAULT_MOCAP_HOST_ADDR "192.168.20.101"
 #define DEFAULT_MOCAP_HOST_PORT "801"
 
 #define dbg(...) fprintf(stderr, __VA_ARGS__)
@@ -116,14 +116,13 @@ DataStreamClient::DataStreamClient(lcm_t * lcm, std::string vicon_hostname) :
   _lcm(lcm)
 {
   // local stack
-  std::string host_name;
   Output_GetAxisMapping axis_mapping;
   Output_GetVersion version_number;
 
-  _vicon_client.Connect(host_name);
+  _vicon_client.Connect(vicon_hostname);
   if (!_vicon_client.IsConnected().Connected) {
-    fprintf(stderr, "Error connecting to %s\n", host_name.c_str());
-    return;
+    fprintf(stderr, "Error connecting to %s\n", vicon_hostname.c_str());
+    exit(1);
   }
 
   // enable segment data
@@ -161,6 +160,7 @@ void DataStreamClient::run(void)
 
     // get frame
     while (_vicon_client.GetFrame().Result != Result::Success) {
+      dbg("Couldn't GetFrame()\n");
       usleep(1000);
     }
 
@@ -206,9 +206,11 @@ void DataStreamClient::run(void)
 
           // populate message with position
           for (int i = 0; i < 3; i++)
-            msg.pos[i] = segment_translation.Translation[i];
-          for (int i = 0; i < 4; i++)
-            msg.orientation[0] = segment_rotation.Rotation[i]; //TODO: what is the quaternion format?
+            msg.pos[i] = segment_translation.Translation[i]/1000.0; //vicon data is in mm
+	  msg.orientation[0] = segment_rotation.Rotation[3]; //vicon is x,y,z,w 
+	  msg.orientation[1] = segment_rotation.Rotation[0]; 
+	  msg.orientation[2] = segment_rotation.Rotation[1]; 
+	  msg.orientation[3] = segment_rotation.Rotation[2]; 
 
 
           std::string channel = "VICON_" + subject_name;

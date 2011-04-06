@@ -1,19 +1,14 @@
-set(vicon_lib_name "ViconDataStreamSDK_CPP_x64")
-
-if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-    message("Linking against 64-bit Vicon library")
-    set(vicon_lib_name "ViconDataStreamSDK_CPP_x64")
+if( CMAKE_SYSTEM_PROCESSOR STREQUAL "x64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "amd64" )
+  message("Linking against 64-bit Vicon library")
+  set(vicon_lib_name "ViconDataStreamSDK_CPP_x64")
 else()
-    message("Linking against 32-bit Vicon library")
-    set(vicon_lib_name "ViconDataStreamSDK_CPP_x86")
+  message("Linking against 32-bit Vicon library")
+  set(vicon_lib_name "ViconDataStreamSDK_CPP_x86")
 endif()
-
-add_library(DataStreamSDK_Wrapper data_stream_client.cpp)
-target_link_libraries(DataStreamSDK_Wrapper -l${vicon_lib_name})         
 
 # Create an executable program vicon-client
 add_executable(vicon-client vicon_client.cpp)
-target_link_libraries(vicon-client ${LCMTYPES_LIBS} DataStreamSDK_Wrapper)
+target_link_libraries(vicon-client ${LCMTYPES_LIBS} -l${vicon_lib_name})
 pods_use_pkg_config_packages(vicon-client lcm)
 
 # make executable public
