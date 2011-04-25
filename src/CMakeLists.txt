@@ -20,3 +20,8 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/lib${vicon_lib_name}.so
                 DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
 
+pods_install_pkg_config_file(vicon-lcmtypes
+    LIBS -l${LCMTYPES_LIBS}
+    REQUIRES lcm
+    VERSION 0.0.1)
+
