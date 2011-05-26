@@ -14,7 +14,8 @@
 #include "data_stream_client.hpp"
 
 // defaults
-#define DEFAULT_MOCAP_HOST_ADDR "192.168.20.101"
+#define DEFAULT_MOCAP_HOST_ADDR "192.168.20.99"
+//#define DEFAULT_MOCAP_HOST_ADDR "192.168.1.104"
 #define DEFAULT_MOCAP_HOST_PORT "801"
 
 #define dbg(...) fprintf(stderr, __VA_ARGS__)
@@ -232,13 +233,20 @@ void DataStreamClient::run(void)
 // main function
 int main(int argc, char **argv)
 {
+  setlinebuf(stdout);
 
   lcm_t * lcm = lcm_create(NULL);
 
   //TODO: get host and port from command line
   std::string mocap_host_addr = DEFAULT_MOCAP_HOST_ADDR;
   std::string mocap_host_port = DEFAULT_MOCAP_HOST_PORT;
+
+  if(argc > 1) {
+      mocap_host_addr = argv[1];
+  }
+
   std::string vicon_host = mocap_host_addr + ":" + mocap_host_port;
+  printf("Vicon adddress: %s\n", vicon_host.c_str());
 
   // create class instance/ connect to server
   DataStreamClient *data_stream_client = new DataStreamClient(lcm, vicon_host);
