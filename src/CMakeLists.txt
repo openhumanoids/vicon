@@ -20,13 +20,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/lib${vicon_lib_name}.so ${CMAKE_BINAR
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/lib${vicon_lib_name}.so 
                 DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
-
-pods_install_pkg_config_file(vicon-lcmtypes
-    LIBS -l${LCMTYPES_LIBS}
-    REQUIRES lcm
-    VERSION 0.0.1)
-    
-    
+   
 # Create an executable program vicon-client
 add_executable(vicon-frames-updater vicon_frames_updater.cpp)
 pods_use_pkg_config_packages(vicon-frames-updater lcm bot2-frames lcmtypes_vicon)
