@@ -8,8 +8,8 @@ endif()
 
 # Create an executable program vicon-client
 add_executable(vicon-client vicon_client.cpp)
-target_link_libraries(vicon-client ${LCMTYPES_LIBS} -l${vicon_lib_name})
-pods_use_pkg_config_packages(vicon-client lcm)
+target_link_libraries(vicon-client -l${vicon_lib_name})
+pods_use_pkg_config_packages(vicon-client lcm lcmtypes_vicon)
 
 # make executable public
 pods_install_executables(vicon-client)
