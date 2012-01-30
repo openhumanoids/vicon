@@ -1,13 +1,12 @@
 package vicon;
 
-struct body_t
+struct body_t   // mirrors the bot_core_rigid_transform_t. KEEP IN SYNC!
 {
- 	int64_t utime;              // utime that the measurement took place
+    int64_t utime;              // utime that the actual measurement took place
 
-    double pos[3];              // position x,y,z in meters
- 
-    double orientation[4];      // a quaterion.
-    							// rotate vector in body coordinate frame 
-                                // (X-forward, Z-up) by this to get that vector
-                                // in local frame		
+    double trans[3];            // translation vector component (x,y,z)
+
+    double quat[4];      		// rotation quaternion component (w,x,y,z)
+
+                               
 }

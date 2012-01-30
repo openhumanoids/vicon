@@ -22,7 +22,7 @@ static void vicon_handler(const lcm_recv_buf_t *rbuf, const char *channel, const
   app_t * app = (app_t *) user_data;
   BotTrans body_to_local;
 
-  bot_trans_set_from_quat_trans(&body_to_local, msg->orientation, msg->pos);
+  bot_trans_set_from_quat_trans(&body_to_local, msg->quat, msg->trans);
   bot_frames_update_frame(app->frames, app->body_frame_name, bot_frames_get_root_name(app->frames), &body_to_local,
       msg->utime);
 }

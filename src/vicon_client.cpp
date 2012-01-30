@@ -207,11 +207,11 @@ void DataStreamClient::run(void)
 
           // populate message with position
           for (int i = 0; i < 3; i++)
-            msg.pos[i] = segment_translation.Translation[i]/1000.0; //vicon data is in mm
-	  msg.orientation[0] = segment_rotation.Rotation[3]; //vicon is x,y,z,w 
-	  msg.orientation[1] = segment_rotation.Rotation[0]; 
-	  msg.orientation[2] = segment_rotation.Rotation[1]; 
-	  msg.orientation[3] = segment_rotation.Rotation[2]; 
+            msg.trans[i] = segment_translation.Translation[i]/1000.0; //vicon data is in mm
+	  msg.quat[0] = segment_rotation.Rotation[3]; //vicon is x,y,z,w
+	  msg.quat[1] = segment_rotation.Rotation[0];
+	  msg.quat[2] = segment_rotation.Rotation[1];
+	  msg.quat[3] = segment_rotation.Rotation[2];
 
 
           std::string channel = "VICON_" + subject_name;
