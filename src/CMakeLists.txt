@@ -1,7 +1,7 @@
 if( CMAKE_SYSTEM_PROCESSOR STREQUAL "x64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "amd64" )
   message("Linking against 64-bit Vicon library")
   set(vicon_lib_name "ViconDataStreamSDK_CPP_x64")
-elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86")
+elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "i686")
   message("Linking against 32-bit Vicon library")
   set(vicon_lib_name "ViconDataStreamSDK_CPP_x86")
 else()
