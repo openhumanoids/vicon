@@ -8,6 +8,7 @@
 // includes
 #include <lcm/lcm.h>
 #include <sys/time.h>
+#include <unistd.h>
 #include <lcmtypes/vicon_body_t.h>
 
 
