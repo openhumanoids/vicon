@@ -32,3 +32,9 @@ pods_use_pkg_config_packages(vicon-frames-updater lcm bot2-frames lcmtypes_vicon
 # make executable public
 pods_install_executables(vicon-frames-updater)
 
+
+# DEPRECATED:
+# A more complete driver which publishes individual marker positions
+# this mode should be incorporated into the main driver
+# Note this module uses lcmtypes that are not well defined.
+add_subdirectory(vicon-segments-driver)

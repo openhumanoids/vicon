@@ -7,9 +7,9 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include <iostream>
-#include <ViconDataStreamSDK_CPP/Client.h>
 #include <lcm/lcm-cpp.hpp>
 #include <lcmtypes/vicon.hpp>
+#include "../data_stream_client.hpp"
 
 using namespace ViconDataStreamSDK::CPP;
 
