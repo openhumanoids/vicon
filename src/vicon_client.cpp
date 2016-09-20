@@ -10,7 +10,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <lcmtypes/vicon.hpp>
-
+#include <iostream>
 
 #include "data_stream_client.hpp"
 
@@ -87,6 +87,62 @@ std::string Adapt(const Unit::Enum i_Unit)
 }
 }
 
+vicon::model_t& findModel(std::vector<vicon::model_t>& models, std::string modelname)
+{
+    for(int i = 0; i < models.size(); i++)
+    {
+        if (models[i].name == modelname)
+        {
+            return models[i];
+        }
+    }
+    vicon::model_t model;
+    model.name = modelname;
+    model.nummarkers = 0;
+    model.numsegments = 0;
+    models.push_back(model);
+    return models.back();
+}
+
+vicon::marker_t& findMarker(std::vector<vicon::marker_t>& markers, std::string markername)
+{
+    for(int i = 0; i < markers.size(); i++)
+    {
+        if (markers[i].name == markername)
+        {
+            return markers[i];
+        }
+    }
+    vicon::marker_t marker;
+    marker.name = markername;
+    markers.push_back(marker);
+    return markers.back();
+}
+
+vicon::segment_t& findSegment(std::vector<vicon::segment_t>& segments, std::string segmentname)
+{
+    for(int i = 0; i < segments.size(); i++)
+    {
+        if (segments[i].name == segmentname)
+        {
+            return segments[i];
+        }
+    }
+    vicon::segment_t segment;
+    segment.name = segmentname;
+    segments.push_back(segment);
+    return segments.back();
+}
+
+vicon::xyz_t getXYZ(double vals[3])
+{
+    vicon::xyz_t xyz;
+    xyz.x = vals[0];
+    xyz.y = vals[1];
+    xyz.z = vals[2];
+    return xyz;
+}
+
 // class
 class DataStreamClient {
 public:
@@ -145,6 +201,10 @@ DataStreamClient::DataStreamClient(lcm::LCM &lcm, std::string vicon_hostname) :
   axis_mapping = _vicon_client.GetAxisMapping();
   dbg("Axis Mapping: X-%s Y-%s Z-%s\n", Adapt(axis_mapping.XAxis).c_str(), Adapt(axis_mapping.YAxis).c_str(), Adapt(axis_mapping.ZAxis).c_str());
 
+  // Enable some different data types
+  _vicon_client.EnableMarkerData();
+  _vicon_client.EnableUnlabeledMarkerData();
+  _vicon_client.EnableDeviceData();
 }
 
 // class destructor
@@ -166,32 +226,81 @@ void DataStreamClient::run(void)
       usleep(1000);
     }
 
-    // get frame number
-    Output_GetFrameNumber frame_number = _vicon_client.GetFrameNumber();
-
     // get timecode and populate subject message
     //    Output_GetTimecode time_code = _vicon_client.GetTimecode();
     vicon::body_t msg;
     msg.utime = _timestamp_now();
 
+    vicon::vicon_t system;
+
     // get subject count
-    uint subject_count = _vicon_client.GetSubjectCount().SubjectCount;
+    system.nummodels = _vicon_client.GetSubjectCount().SubjectCount;
+
+    // Uh oh, models disappeared - realloc the system
+    if (system.nummodels < system.models.size())
+    {
+        system.models.clear();
+        system.models.reserve(system.nummodels);
+    }
+
+    if (system.nummodels == 0)
+    {
+        std::cout << "no models detected" << std::endl;
+        continue;
+    }
 
     // loop through subjects
-    for (uint subject_index = 0; subject_index < subject_count; subject_index++) {
+    for (uint subject_index = 0; subject_index < system.nummodels; subject_index++) {
+      ////////////////////////////////////////////////////////////////////////
+      /// Marker
+      vicon::model_t& model = findModel(system.models, _vicon_client.GetSubjectName(subject_index).SubjectName);
+
+      model.nummarkers = _vicon_client.GetMarkerCount(model.name).MarkerCount;
+      if (model.nummarkers < model.markers.size())
+      {
+        model.markers.clear();
+        model.markers.reserve(model.nummarkers);
+      }
+
+      for(int32_t j = 0; j < model.nummarkers; j++)
+      {
+        vicon::marker_t& marker = findMarker(model.markers, _vicon_client.GetMarkerName(model.name, j).MarkerName);
+        Output_GetMarkerGlobalTranslation translation = _vicon_client.GetMarkerGlobalTranslation(model.name, marker.name);
+        marker.o = translation.Occluded;
+        memcpy(marker.xyz, translation.Translation, 3*sizeof(double));
+      }
+
+      ////////////////////////////////////////////////////////////////////////
+      /// Segments
+
+      // get number of segments
+      model.numsegments = _vicon_client.GetSegmentCount(model.name).SegmentCount;
+      if (model.numsegments < model.segments.size())
+      {
+          model.segments.clear();
+          model.segments.reserve(model.numsegments);
+      }
+
       // get subject name
       std::string subject_name = _vicon_client.GetSubjectName(subject_index).SubjectName;
 
       // get root segment name
       std::string root_segment_name = _vicon_client.GetSubjectRootSegmentName(subject_name).SegmentName;
 
-      // get number of segments
-      uint segment_count = _vicon_client.GetSegmentCount(subject_name).SegmentCount;
-
       // loop through segments
-      for (uint segment_index = 0; segment_index < segment_count; segment_index++) {
+      for (uint segment_index = 0; segment_index < model.numsegments; segment_index++) {
         // get segment name
         std::string segment_name = _vicon_client.GetSegmentName(subject_name, segment_index).SegmentName;
+
+        vicon::segment_t& segment = findSegment(model.segments, segment_name);
+        Output_GetSegmentGlobalRotationEulerXYZ A = _vicon_client.GetSegmentGlobalRotationEulerXYZ(model.name, segment.name);
+        Output_GetSegmentGlobalTranslation T = _vicon_client.GetSegmentGlobalTranslation(model.name, segment.name);
+        Output_GetSegmentLocalRotationEulerXYZ ba = _vicon_client.GetSegmentLocalRotationEulerXYZ(model.name, segment.name);
+        Output_GetSegmentLocalTranslation bt = _vicon_client.GetSegmentLocalTranslation(model.name, segment.name);
+        memcpy(segment.A, A.Rotation, 3*sizeof(double));
+        memcpy(segment.T, T.Translation, 3*sizeof(double));
+        memcpy(segment.ba, ba.Rotation, 3*sizeof(double));
+        memcpy(segment.bt, bt.Translation, 3*sizeof(double));
 
         // check if root segment
         if (segment_name == root_segment_name) { //TODO: handle articulated bodies
@@ -220,9 +329,11 @@ void DataStreamClient::run(void)
 
           // break from segment for loop
           break;
-        }
-      }
-    }
+        } // root segment
+      } // for each segment (model.numsegments)
+    } // for each subject (system.nummodels)
+
+    _lcm.publish("VICON_MARKERS", &system);
 
   }
 
@@ -234,8 +345,6 @@ void DataStreamClient::run(void)
 // main function
 int main(int argc, char **argv)
 {
-  setlinebuf(stdout);
-
   lcm::LCM lcm;
 
   //TODO: get host and port from command line
@@ -247,7 +356,7 @@ int main(int argc, char **argv)
   }
 
   std::string vicon_host = mocap_host_addr + ":" + mocap_host_port;
-  printf("Vicon adddress: %s\n", vicon_host.c_str());
+  std::cout << "Vicon adddress: " << vicon_host << std::endl;
 
   // create class instance/ connect to server
   DataStreamClient *data_stream_client = new DataStreamClient(lcm, vicon_host);
