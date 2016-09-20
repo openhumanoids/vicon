@@ -6,10 +6,10 @@
  */
 
 // includes
-#include <lcm/lcm.h>
+#include <lcm/lcm-cpp.hpp>
 #include <sys/time.h>
 #include <unistd.h>
-#include <lcmtypes/vicon_body_t.h>
+#include <lcmtypes/vicon.hpp>
 
 
 #include "data_stream_client.hpp"
@@ -92,7 +92,7 @@ class DataStreamClient {
 public:
 
   // constructor
-  DataStreamClient(lcm_t * lcm, std::string vicon_hostname);
+  DataStreamClient(lcm::LCM &lcm, std::string vicon_hostname);
 
   // destructor
   ~DataStreamClient();
@@ -102,7 +102,7 @@ public:
 
 private:
   //lcm
-  lcm_t * _lcm;
+  lcm::LCM &_lcm;
 
   // data stream client
   ViconDataStreamSDK::CPP::Client _vicon_client;
@@ -114,7 +114,7 @@ private:
 };
 
 // class constructor
-DataStreamClient::DataStreamClient(lcm_t * lcm, std::string vicon_hostname) :
+DataStreamClient::DataStreamClient(lcm::LCM &lcm, std::string vicon_hostname) :
   _lcm(lcm)
 {
   // local stack
@@ -171,7 +171,7 @@ void DataStreamClient::run(void)
 
     // get timecode and populate subject message
     //    Output_GetTimecode time_code = _vicon_client.GetTimecode();
-    vicon_body_t msg;
+    vicon::body_t msg;
     msg.utime = _timestamp_now();
 
     // get subject count
@@ -216,7 +216,7 @@ void DataStreamClient::run(void)
 
 
           std::string channel = "VICON_" + subject_name;
-          vicon_body_t_publish(_lcm, channel.c_str(), &msg);
+          _lcm.publish(channel.c_str(), &msg);
 
           // break from segment for loop
           break;
@@ -236,7 +236,7 @@ int main(int argc, char **argv)
 {
   setlinebuf(stdout);
 
-  lcm_t * lcm = lcm_create(NULL);
+  lcm::LCM lcm;
 
   //TODO: get host and port from command line
   std::string mocap_host_addr = DEFAULT_MOCAP_HOST_ADDR;
